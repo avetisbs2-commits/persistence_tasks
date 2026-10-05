@@ -3,6 +3,7 @@ package com.example.jpa.repository;
 import com.example.jpa.entity.Student;
 import com.example.jpa.util.JpaUtil;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.TypedQuery;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,7 +18,18 @@ public class StudentRepository {
         // 4. Commit transaction.
         // 5. Close EntityManager.
         // 6. Return saved student.
-        return student;
+        EntityManager em = JpaUtil.createEntityManager();
+        try {
+            em.getTransaction().begin();
+            em.persist(student);
+            em.getTransaction().commit();
+            return student;
+        } catch (Exception e) {
+            rollbackIfActive(em);
+            throw e;
+        } finally {
+            em.close();
+        }
     }
 
     public Student findById(Long id) {
@@ -27,7 +39,13 @@ public class StudentRepository {
         // 3. Close EntityManager.
         // 4. Return found Student.
         // Return null if student does not exist.
-        return null;
+            EntityManager em = JpaUtil.createEntityManager();
+            try {
+                return em.find(Student.class, id);
+            } finally {
+                em.close();
+            }
+
     }
 
     public List<Student> findAll() {
@@ -36,7 +54,13 @@ public class StudentRepository {
         // 2. Write JPQL query.
         // 3. Return all students.
         // 4. Close EntityManager.
-        return new ArrayList<>();
+        EntityManager em = JpaUtil.createEntityManager();
+        try {
+            TypedQuery<Student> query = em.createQuery("SELECT s FROM Student s", Student.class);
+            return query.getResultList();
+        } finally {
+            em.close();
+        }
     }
 
     public Student update(Student student) {
@@ -47,7 +71,18 @@ public class StudentRepository {
         // 4. Commit transaction.
         // 5. Close EntityManager.
         // 6. Return updated student.
-        return student;
+        EntityManager em = JpaUtil.createEntityManager();
+        try {
+            em.getTransaction().begin();
+            Student updatedStudent = em.merge(student);
+            em.getTransaction().commit();
+            return updatedStudent;
+        } catch (Exception e) {
+            rollbackIfActive(em);
+            throw e;
+        } finally {
+            em.close();
+        }
     }
 
     public boolean deleteById(Long id) {
@@ -59,13 +94,32 @@ public class StudentRepository {
         // 5. Commit transaction.
         // 6. Close EntityManager.
         // 7. Return true if removed.
-        return false;
+        EntityManager em = JpaUtil.createEntityManager();
+        try {
+            em.getTransaction().begin();
+            Student student = em.find(Student.class, id);
+            if (student != null) {
+                em.remove(student);
+                em.getTransaction().commit();
+                return true;
+            }
+            em.getTransaction().commit();
+            return false;
+        } catch (Exception e) {
+            rollbackIfActive(em);
+            throw e;
+        } finally {
+            em.close();
+        }
     }
 
     private void rollbackIfActive(EntityManager entityManager) {
         // TODO:
         // Check whether transaction is active.
         // Roll back the transaction if it is active.
+        if (entityManager != null && entityManager.getTransaction().isActive()) {
+            entityManager.getTransaction().rollback();
+        }
     }
 }
 
