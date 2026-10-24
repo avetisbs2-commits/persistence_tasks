@@ -8,6 +8,7 @@ The modules will grow from simple to harder topics:
 JPA
 Hibernate
 JDBC
+NoSQL (MongoDB)
 transactions
 relationships
 queries
@@ -30,6 +31,10 @@ persistence_tasks/
 │   ├── README.md
 │   ├── pom.xml
 │   └── src/
+├── mongodb-simple-crud/
+│   ├── README.md
+│   ├── pom.xml
+│   └── src/
 └── sql-todo-scripts/
     ├── README.md
     ├── pom.xml
@@ -41,6 +46,7 @@ persistence_tasks/
 ```text
 jpa-simple-crud
 jdbc-simple-crud
+mongodb-simple-crud
 sql-todo-scripts
 ```
 
@@ -67,6 +73,18 @@ Maven
 ```
 
 No Spring, JPA, or Hibernate is used.
+
+## MongoDB Simple CRUD
+
+Practice basic CRUD with a **NoSQL** (document) database:
+
+```text
+Java
+MongoDB
+Maven
+```
+
+No Spring and no mapping library is used. The module starts with a short explanation of NoSQL (documents, collections, flexible schema, embedding) and shows how to **install MongoDB on your own computer** and connect to it. Students need a running MongoDB server.
 
 ## SQL TODO Scripts
 
@@ -110,6 +128,18 @@ Use these values:
 /Users/tigranho/Projects/test/persistence_tasks/jpa-simple-crud
 ```
 
+Create an `Application` configuration for MongoDB (a MongoDB server must be installed and running):
+
+- Name: `MongoDB Simple CRUD`
+- Main class: `com.example.mongo.Main`
+- Module classpath: `mongodb-simple-crud`
+- JRE: project default JDK 21
+- Working directory:
+
+```text
+/Users/tigranho/Projects/test/persistence_tasks/mongodb-simple-crud
+```
+
 Create another `Application` configuration for JDBC:
 
 - Name: `JDBC Simple CRUD`
@@ -145,6 +175,15 @@ From only the JDBC module:
 cd /Users/tigranho/Projects/test/persistence_tasks/jdbc-simple-crud
 mvn clean package
 ```
+
+From only the MongoDB module:
+
+```bash
+cd /Users/tigranho/Projects/test/persistence_tasks/mongodb-simple-crud
+mvn clean package
+```
+
+The MongoDB tests are skipped when no MongoDB server is running, so the root build does not fail on a computer without MongoDB.
 
 For the SQL module, open the files under:
 

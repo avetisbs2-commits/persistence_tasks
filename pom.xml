@@ -12,6 +12,7 @@
     <modules>
         <module>jpa-simple-crud</module>
         <module>jdbc-simple-crud</module>
+        <module>mongodb-simple-crud</module>
         <module>sql-todo-scripts</module>
     </modules>
 
