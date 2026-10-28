@@ -4,11 +4,18 @@ import com.example.mongo.entity.Student;
 import com.example.mongo.mapper.StudentMapper;
 import com.example.mongo.util.MongoUtil;
 import com.mongodb.client.MongoCollection;
+import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.Sorts;
+import com.mongodb.client.model.Updates;
+import com.mongodb.client.result.DeleteResult;
+import com.mongodb.client.result.UpdateResult;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static java.lang.Long.toHexString;
 
 /**
  * Saves and loads students in the MongoDB collection "students".
@@ -60,13 +67,17 @@ public class StudentRepository {
      */
     public Student create(Student student) {
         // TODO:
-        // 1. Make the document:       Document document = StudentMapper.toDocument(student);
-        // 2. Insert it:               collection.insertOne(document);
-        // 3. insertOne put the new "_id" into the document. Read it:   document.getObjectId("_id")
-        // 4. Save it in the student as TEXT:   student.setId(... .toHexString())
+        // 1. Make the document:
+        Document document = StudentMapper.toDocument(student);
+        // 2. Insert it:
+        collection.insertOne(document);
+        // 3. insertOne put the new "_id" into the document. Read it:
+        ObjectId id = document.getObjectId("_id");
+        // 4. Save it in the student as TEXT:
+        student.setId(id.toHexString());
         // 5. Return the student.
 
-        return student;     // TEMPORARY - nothing is saved yet
+        return student;
     }
 
     /**
@@ -76,10 +87,17 @@ public class StudentRepository {
     public Student findById(String id) {
         // TODO:
         // 1. If id is null or not ObjectId.isValid(id), return null.
+        if(id == null || !ObjectId.isValid(id)){
+            return null;
+        }
         // 2. Find the document:   collection.find(Filters.eq("_id", new ObjectId(id))).first()
+        Document document = collection.find(Filters.eq("_id", new ObjectId(id))).first();
         // 3. If it is null, return null. Otherwise return StudentMapper.fromDocument(document).
+        if (document == null){
+            return null;
+        }
 
-        return null;        // TEMPORARY
+        return StudentMapper.fromDocument(document);
     }
 
     /**
@@ -89,9 +107,14 @@ public class StudentRepository {
     public List<Student> findAll() {
         // TODO:
         // 1. Get the documents:   collection.find().sort(Sorts.ascending("_id")).into(new ArrayList<>())
+        ArrayList<Document> documents = collection.find().sort(Sorts.ascending("_id")).into(new ArrayList<>());
         // 2. Turn each Document into a Student (StudentMapper.fromDocument) in a new list, and return it.
+        ArrayList<Student> students = new ArrayList<>();
+        for (Document document : documents){
+            students.add( StudentMapper.fromDocument(document));
+        }
 
-        return new ArrayList<>();   // TEMPORARY
+        return students;
     }
 
     /**
@@ -101,11 +124,24 @@ public class StudentRepository {
     public Student update(Student student) {
         // TODO:
         // 1. If the id is null or not valid, return null.
+        if (student.getId() == null || !ObjectId.isValid(student.getId())){
+            return null;
+        }
         // 2. Replace:  collection.replaceOne(Filters.eq("_id", new ObjectId(student.getId())), StudentMapper.toDocument(student))
+        UpdateResult result = collection.replaceOne(
+                Filters.eq("_id", new ObjectId(student.getId())),
+                StudentMapper.toDocument(student)
+        );
+
         // 3. The result tells how many documents matched:   result.getMatchedCount()
         //    0 -> return null.   Otherwise return the student.
 
-        return student;     // TEMPORARY - nothing is changed yet
+
+        if (result.getMatchedCount() == 0) {
+            return null;
+        }
+
+        return student;
     }
 
     /**
@@ -114,11 +150,17 @@ public class StudentRepository {
      */
     public boolean deleteById(String id) {
         // TODO:
-        // 1. If id is null or not valid, return false.
+        // 1. If id is null or not valid, return false
+        if (id == null || !ObjectId.isValid(id)){
+            return false;
+        }
         // 2. collection.deleteOne(Filters.eq("_id", new ObjectId(id)))   -> result.getDeletedCount()
+            DeleteResult result = collection.deleteOne(Filters.eq("_id", new ObjectId(id)));
         // 3. Return true when the count is more than 0.
-
-        return false;       // TEMPORARY
+        if (result.getDeletedCount() > 0 ){
+            return true;
+        }
+        return false;
     }
 
     // =====================================================================================
@@ -132,9 +174,17 @@ public class StudentRepository {
     public List<Student> findByAgeGreaterThan(int age) {
         // TODO
 
-        return new ArrayList<>();   // TEMPORARY
-    }
+        ArrayList<Document> documents = collection.
+                find(Filters.gt("age", age)).
+                sort(Sorts.ascending("_id")).
+                into(new ArrayList<>());
+        ArrayList<Student> students = new ArrayList<>();
+        for (Document document : documents){
+            students.add( StudentMapper.fromDocument(document));
+        }
 
+        return students;
+}
     /**
      * The students who live in this city, in the order of creation. The city is INSIDE the embedded document
      * "address". Reach it with a DOT:   Filters.eq("address.city", city)
@@ -142,8 +192,18 @@ public class StudentRepository {
      */
     public List<Student> findByCity(String city) {
         // TODO
+        ArrayList<Document> documents = collection
+                .find(Filters.eq("address.city", city))
+                .sort(Sorts.ascending("_id"))
+                .into(new ArrayList<>());
 
-        return new ArrayList<>();   // TEMPORARY
+        ArrayList<Student> students = new ArrayList<>();
+
+        for (Document document : documents) {
+            students.add(StudentMapper.fromDocument(document));
+        }
+
+        return students;
     }
 
     /**
@@ -155,7 +215,16 @@ public class StudentRepository {
      */
     public boolean addTag(String id, String tag) {
         // TODO
-
-        return false;       // TEMPORARY
+        if (id == null || !ObjectId.isValid(id)) {
+            return false;
+        }
+        UpdateResult result = collection.updateOne(
+                Filters.eq("_id", new ObjectId(id)),
+                Updates.addToSet("tags", tag)
+        );
+        if (result.getModifiedCount() == 1 ){
+            return true;
+        }
+        return false;
     }
 }
